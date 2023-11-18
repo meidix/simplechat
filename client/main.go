@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"meidix/chatclient/chatclient"
+	"meidix/chatclient/connection"
 	"net"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -19,48 +19,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	buff := make([]byte, 1024)
-	_ , err = conn.Read(buff); if err != nil {
+	resp, err := connection.RecvTxtMsg(conn)
+	if err != nil {
 		fmt.Println("There was a problem receiving the messege")
 		os.Exit(1)
 	}
-	fmt.Println(strings.Trim(string(buff), "\x00"))
+	fmt.Println(resp)
 
 	user := ""
 	fmt.Scan(&user)
-	buff = []byte(user)
-	_, err = conn.Write(buff); if err != nil {
+	err = connection.SendTxtMsg(conn, user)
+	if err != nil {
 		fmt.Println("There was a problem sending a messege")
 	}
 
 	ch := make(chan int)
 
-	go establishReceiver(*conn, ch)
-	go establishSender(*conn, ch)
+	go chatclient.EstablishReceiver(*conn, ch)
+	go chatclient.EstablishSender(*conn, ch)
 
 	<- ch
 
-}
-
-func establishReceiver(conn net.TCPConn, c chan int) {
-	for {
-		rbuff := make([]byte, 1024)
-		_, err := conn.Read(rbuff); if err != nil {
-			fmt.Println("There was a problem receiving messege,", err)
-			continue
-		}
-		fmt.Println(strings.Trim(string(rbuff), "\x00"))
-	}
-}
-
-func establishSender(conn net.TCPConn, c chan int) {
-	scn := bufio.NewScanner(os.Stdin)
-	for {
-		scn.Scan()
-		text := scn.Text()
-		_, err := conn.Write([]byte(text)); if err != nil {
-			fmt.Println("There was a problem sending the messege,", err)
-			continue
-		}
-	}
 }
