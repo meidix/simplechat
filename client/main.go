@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
@@ -53,9 +54,10 @@ func establishReceiver(conn net.TCPConn, c chan int) {
 }
 
 func establishSender(conn net.TCPConn, c chan int) {
+	scn := bufio.NewScanner(os.Stdin)
 	for {
-		text := ""
-		fmt.Scan(&text)
+		scn.Scan()
+		text := scn.Text()
 		_, err := conn.Write([]byte(text)); if err != nil {
 			fmt.Println("There was a problem sending the messege,", err)
 			continue
