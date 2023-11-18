@@ -22,7 +22,7 @@ func MessegeDispatcher(u map[string]net.TCPConn, ch chan Messege) {
 	for m := range ch {
 		for key, conn := range u {
 			if key != m.sender {
-				err := connection.SendTxtMsg(&conn, m.text); if err != nil {
+				err := connection.SendTxtMsg(&conn, m.toString()); if err != nil {
 					fmt.Println("there was a problem sending messeges")
 					delete(u, key)
 				}
