@@ -9,6 +9,9 @@ import (
 
 func main() {
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:8080")
+	if err != nil {
+		fmt.Println("There was a problem resolving the address")
+	}
 
 	l, err := net.ListenTCP("tcp", addr)
 	if err != nil {
@@ -20,7 +23,12 @@ func main() {
 
 	users := map[string]net.TCPConn{}
 
-	for i := 0; i < 2; i++{
+
+	gm := make(chan string)
+
+	go messegeDispatcher(users, gm)
+
+	for {
 		conn, err := l.AcceptTCP()
 		if err != nil {
 			fmt.Println("There was a problem in establishing the connection")
@@ -34,28 +42,17 @@ func main() {
 			fmt.Println("There was a problem reading response")
 			os.Exit(1)
 		}
-		users[strings.Trim(string(rbuff), "\x00")] = *conn
+		setupChat(rbuff, conn, users, gm)
 		fmt.Println("user connected", strings.Trim(string(rbuff), "\x00"), "connected")
 
 	}
+}
 
-	fmt.Println(users)
-
-	g := []byte("You can now start chatting")
-
-	gm := make(chan string)
-
-	go messegeDispatcher(users, gm)
-
-	for key, conn := range users {
-		_, err := conn.Write(g); if err != nil {
-			fmt.Println("There was a problem sending a messege")
-		}
-		go messegeListener(key, conn, gm)
-	}
-
-	end := ""
-	fmt.Scan(&end)
+func setupChat(buff []byte, conn *net.TCPConn, u map[string]net.TCPConn, ch chan string) {
+	key := strings.Trim(string(buff), "\x00")
+	u[key] = *conn
+	go messegeListener(key, *conn, ch)
+	conn.Write([]byte("Welcome to This Chat"))
 }
 
 
@@ -64,6 +61,7 @@ func messegeListener(u string, conn net.TCPConn, ch chan string) {
 		rbuff := make([]byte, 1024)
 		_, err := conn.Read(rbuff); if err != nil {
 			fmt.Println("There was a problem receiving messege")
+			os.Exit(1)
 		}
 		ch <- strings.Trim(string(rbuff), "\x00")
 	}
@@ -72,9 +70,10 @@ func messegeListener(u string, conn net.TCPConn, ch chan string) {
 
 func messegeDispatcher(u map[string]net.TCPConn, ch chan string) {
 	for m := range ch {
-		for _, conn := range u {
+		for key, conn := range u {
 			_, err := conn.Write([]byte(m)); if err != nil {
 				fmt.Println("there was a problem sending messeges")
+				delete(u, key)
 			}
 		}
 	}
