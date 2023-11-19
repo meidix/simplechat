@@ -19,3 +19,9 @@ go run .
 ```
 
 This will run a client app and connects to the server app that you ran in the previous step. To run multiple clients, you need to start another terminal and simply repeat the process of running a client. When at least two clients are connected to the server the y can start chatting.
+
+## Server Structure
+
+When a server process is executed, a TCP server is started on `localhost:8080`. The main goroutine of the server handles the incomming connection requests and setups the chat logic. The chatting logic is implemented in the `chat` module. In this module, a goroutine is started for every connection which is responsible for receiving the incomming messeges from that connection, and passes them to a global messege dispatching goroutine which then sends the messege to every other user in the chatroom.
+
+**Note:** Neither the users, nor the chat messeges are persisted to hard drive. The messeges are not saved in the RAM.
