@@ -28,4 +28,6 @@ When a server process is executed, a TCP server is started on `localhost:8080`. 
 
 ## Client Structure
 
-The client process establishes a connection with the server, and spawns two goroutines. One resonsible for receiving input from the console and sending it over the established connection, while the other one listens for incomming messeges from the server and printing them to the terminal.
+The client process establishes a connection with the server, and runs two goroutines. One resonsible for receiving input from the console and sending it over the established connection, while the other one listens for incomming messeges from the server and printing them to the terminal.
+
+The implementation detail of the client goroutines is available at the `chatclient` module of the client appliation.
